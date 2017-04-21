@@ -105,11 +105,11 @@ rm -rf restart.sh
 echo "#!/bin/bash" >> restart.sh
 echo "kill \`pidof kcptun_server\`" >> restart.sh
 echo "export PATH=$GO_DIR/bin:\$PATH" >> restart.sh
-echo "kcptun_server -t \"127.0.0.1:$SS_PORT\" -l \":$KCPTUN_PORT\" -mode fast2 > /dev/null 2 > /dev/null &" >> restart.sh
+echo "kcptun_server -t \"127.0.0.1:$SS_PORT\" -l \":$KCPTUN_PORT\" -mode fast2 > /dev/null 2>/dev/null &" >> restart.sh
 chmod +x restart.sh
 
 # run kcptun
-kcptun_server -t "127.0.0.1:$SS_PORT" -l ":$KCPTUN_PORT" -mode fast2 > /dev/null 2 > /dev/null &
+kcptun_server -t "127.0.0.1:$SS_PORT" -l ":$KCPTUN_PORT" -mode fast2 > /dev/null 2>/dev/null &
 
 # reset dir
 cd $CUR_DIR

@@ -66,6 +66,7 @@ chmod +x restart.sh
 
 # optimize
 # refer to: https://shadowsocks.org/en/config/advanced.html
+# NOTE: we use bbr but not hybla for 'net.ipv4.tcp_congestion_control'
 echo "" >> /etc/security/limits.conf
 echo "# SS" >> /etc/security/limits.conf
 echo "*    soft nofile 51200" >> /etc/security/limits.conf
@@ -93,7 +94,7 @@ echo "net.ipv4.tcp_mem = 25600 51200 102400" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_rmem = 4096 87380 67108864" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_wmem = 4096 65536 67108864" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_mtu_probing = 1" >> /etc/sysctl.conf
-echo "net.ipv4.tcp_congestion_control = hybla" >> /etc/sysctl.conf
+#echo "net.ipv4.tcp_congestion_control = hybla" >> /etc/sysctl.conf
 sysctl -p
 
 # run SS
@@ -117,11 +118,11 @@ rm -rf restart.sh
 echo "#!/bin/bash" >> restart.sh
 echo "kill \`pidof kcptun_server\`" >> restart.sh
 echo "export PATH=$GO_DIR/bin:\$PATH" >> restart.sh
-echo "kcptun_server -t \"127.0.0.1:$SS_PORT\" -l \":$KCPTUN_PORT\" -mode fast2 > /dev/null 2 > /dev/null &" >> restart.sh
+echo "kcptun_server -t \"127.0.0.1:$SS_PORT\" -l \":$KCPTUN_PORT\" -mode fast2 > /dev/null 2>/dev/null &" >> restart.sh
 chmod +x restart.sh
 
 # run kcptun
-kcptun_server -t "127.0.0.1:$SS_PORT" -l ":$KCPTUN_PORT" -mode fast2 > /dev/null 2 > /dev/null &
+kcptun_server -t "127.0.0.1:$SS_PORT" -l ":$KCPTUN_PORT" -mode fast2 > /dev/null 2>/dev/null &
 
 # reset dir
 cd $CUR_DIR
