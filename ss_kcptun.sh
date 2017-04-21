@@ -1,36 +1,22 @@
 #!/bin/bash
 
 #
-# this script is used to configure a VPS to run SS(go) with TCP-BBR
+# this script is used to configure a VPS to run SS(go) and kcptun
 #
-# assuming kernel version >= 4.9.?
-# tested under: Ubuntu 16.04 LTS (x64)
+# tested OS: Ubuntu 16.04 LTS (x64)
 #
 
 ###### var
 CUR_DIR=`pwd`
 GO_DIR=~/go
 SS_DIR=~/ss
-SS_PORT=6666
+SS_PORT=8388
 SS_PASSWORD=666666
-
-
-#
-###### BBR
-#
-echo "" >> /etc/sysctl.conf
-echo "# BBR" >> /etc/sysctl.conf
-echo "net.core.default_qdisc = fq" >> /etc/sysctl.conf
-echo "net.ipv4.tcp_congestion_control = bbr" >> /etc/sysctl.conf
-sysctl -p
-
-### check
-#tc qdisc show
-#sysctl net.ipv4.tcp_congestion_control
-
+KCPTUN_DIR=~/kcptun
+KCPTUN_PORT=4000
 
 #
-###### SS(go)
+###### GO
 #
 
 # install golang
@@ -39,12 +25,12 @@ apt install -y golang-go git
 
 # set go env
 mkdir $GO_DIR
-echo "export GOPATH=$GO_DIR" >> ~/.bashrc
-echo "export PATH=$GO_DIR/bin:$PATH" >> ~/.bashrc
-source ~/.bashrc
-# source not work(shouldn't be)? export again for this time
 export GOPATH=$GO_DIR
-export PATH=$GO_DIR/bin:$PATH
+export PATH=$GOPATH/bin:$PATH
+
+#
+###### SS
+#
 
 # install SS(go)
 go get github.com/shadowsocks/shadowsocks-go/cmd/shadowsocks-server
@@ -53,19 +39,21 @@ go get github.com/shadowsocks/shadowsocks-go/cmd/shadowsocks-server
 mkdir $SS_DIR
 cd $SS_DIR
 # config.json
+rm -rf config.json
 echo "{" >> config.json
 echo "    \"server_port\": $SS_PORT," >> config.json
 echo "    \"password\": \"$SS_PASSWORD\"" >> config.json
 echo "}" >> config.json
 # restart.sh
+rm -rf restart.sh
 echo "#!/bin/bash" >> restart.sh
 echo "kill \`pidof shadowsocks-server\`" >> restart.sh
+echo "export PATH=$GO_DIR/bin:\$PATH" >> restart.sh
 echo "shadowsocks-server start > log.txt &" >> restart.sh
 chmod +x restart.sh
 
 # optimize
 # refer to: https://shadowsocks.org/en/config/advanced.html
-# NOTE: we use BBR but not hybla for 'net.ipv4.tcp_congestion_control'
 echo "" >> /etc/security/limits.conf
 echo "# SS" >> /etc/security/limits.conf
 echo "*    soft nofile 51200" >> /etc/security/limits.conf
@@ -93,10 +81,35 @@ echo "net.ipv4.tcp_mem = 25600 51200 102400" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_rmem = 4096 87380 67108864" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_wmem = 4096 65536 67108864" >> /etc/sysctl.conf
 echo "net.ipv4.tcp_mtu_probing = 1" >> /etc/sysctl.conf
+echo "net.ipv4.tcp_congestion_control = hybla" >> /etc/sysctl.conf
 sysctl -p
 
-# run
+# run SS
 shadowsocks-server start > log.txt &
+
+
+#
+###### kcptun
+#
+
+# install kcptun
+go get -u github.com/xtaci/kcptun/server
+# rename
+mv $GOPATH/bin/server $GOPATH/bin/kcptun_server
+
+# configure/scripts
+mkdir $KCPTUN_DIR
+cd $KCPTUN_DIR
+# restart.sh
+rm -rf restart.sh
+echo "#!/bin/bash" >> restart.sh
+echo "kill \`pidof kcptun_server\`" >> restart.sh
+echo "export PATH=$GO_DIR/bin:\$PATH" >> restart.sh
+echo "kcptun_server -t \"127.0.0.1:$SS_PORT\" -l \":$KCPTUN_PORT\" -mode fast2 > /dev/null 2 > /dev/null &" >> restart.sh
+chmod +x restart.sh
+
+# run kcptun
+kcptun_server -t "127.0.0.1:$SS_PORT" -l ":$KCPTUN_PORT" -mode fast2 > /dev/null 2 > /dev/null &
 
 # reset dir
 cd $CUR_DIR
