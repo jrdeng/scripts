@@ -9,7 +9,7 @@ Usage:
     args:
         -h|--help       print this usage
         
-        -d|--date=      specify a date of expiring domains, default to today
+        -d|--date=      specify a date of expiring domains(format: 2018-04-24), default to today
         -s|--suffix=    specify a suffix of domain, default to "com"
         -l|--len=       specify max len of domain name, default to 0 (any len)
         -k|--keyword=   specify keyword in domain, default to "" (no keyword)
