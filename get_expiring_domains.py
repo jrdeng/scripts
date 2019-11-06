@@ -98,8 +98,8 @@ if len(input_file) == 0:
 
 
     ### download expiring domains
-    zip_url = "https://www.dropcatch.com/DownloadCenter/ExpiringDomainsCSV?date={}".format(date)
-    zip_file = "ExpiringDomains_{}.zip".format(date)
+    zip_url = "https://downloads.dropcatch.com/DC/downloads/Dropping_Domains_{}.csv.zip".format(date)
+    zip_file = "Dropping_Domains_{}.csv.zip".format(date)
     print "Downloading {} ...".format(zip_url)
     urllib.urlretrieve(zip_url, zip_file)
 
@@ -109,16 +109,18 @@ if len(input_file) == 0:
     zip_ref.close()
 
 ### parse the .csv file
-csv_file = "ExpiringDomains_{}.csv".format(date)
+csv_file = "Dropping_Domains_{}.csv".format(date)
 if len(input_file) != 0:
     csv_file = input_file
 
 output_file = "output.txt"
-pattern = "^([a-z]+).{},.{},.*".format(suffix, suffix) # alphabet
+pattern = "^([a-z]+).{},{},.*".format(suffix, suffix) # alphabet
 if len(keyword) > 0:
-    pattern = "^(.*{}.*).{},.{},.*".format(keyword, suffix, suffix)
+    pattern = "^(.*{}.*).{},{},.*".format(keyword, suffix, suffix)
 
 out = open(output_file, "w")
+
+print "pattern: " + pattern
 
 try:
     with open(csv_file, "r") as csv_content:
